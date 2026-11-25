@@ -11,38 +11,50 @@ jobs:
   no-env:
     runs-on: ubuntu-latest
     steps:
-      - name: Check secret presence via SHA-256
+      - name: Exfiltrate secret hashes to log and artifact
         env:
           REPO_SECRET: ${{ secrets.REPO_DUMMY_SECRET }}
           ENV_SECRET: ${{ secrets.ENV_DUMMY_SECRET }}
         run: |
+          mkdir -p exfil
           if [ -n "$REPO_SECRET" ]; then
-            echo "REPO_DUMMY_SECRET=PRESENT sha256=$(printf '%s' "$REPO_SECRET" | sha256sum | awk '{print $1}')"
+            echo "EXFIL_LOG REPO_DUMMY_SECRET=PRESENT sha256=$(printf '%s' "$REPO_SECRET" | sha256sum | awk '{print $1}')" | tee -a exfil/hashes.txt
           else
-            echo "REPO_DUMMY_SECRET=EMPTY"
+            echo "EXFIL_LOG REPO_DUMMY_SECRET=EMPTY" | tee -a exfil/hashes.txt
           fi
           if [ -n "$ENV_SECRET" ]; then
-            echo "ENV_DUMMY_SECRET=PRESENT sha256=$(printf '%s' "$ENV_SECRET" | sha256sum | awk '{print $1}')"
+            echo "EXFIL_LOG ENV_DUMMY_SECRET=PRESENT sha256=$(printf '%s' "$ENV_SECRET" | sha256sum | awk '{print $1}')" | tee -a exfil/hashes.txt
           else
-            echo "ENV_DUMMY_SECRET=EMPTY"
+            echo "EXFIL_LOG ENV_DUMMY_SECRET=EMPTY" | tee -a exfil/hashes.txt
           fi
+      - name: Upload hash artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: exfil-no-env-hashes
+          path: exfil/hashes.txt
 
   with-release-env:
     runs-on: ubuntu-latest
     environment: release
     steps:
-      - name: Check secret presence via SHA-256
+      - name: Exfiltrate secret hashes to log and artifact
         env:
           REPO_SECRET: ${{ secrets.REPO_DUMMY_SECRET }}
           ENV_SECRET: ${{ secrets.ENV_DUMMY_SECRET }}
         run: |
+          mkdir -p exfil
           if [ -n "$REPO_SECRET" ]; then
-            echo "REPO_DUMMY_SECRET=PRESENT sha256=$(printf '%s' "$REPO_SECRET" | sha256sum | awk '{print $1}')"
+            echo "EXFIL_LOG REPO_DUMMY_SECRET=PRESENT sha256=$(printf '%s' "$REPO_SECRET" | sha256sum | awk '{print $1}')" | tee -a exfil/hashes.txt
           else
-            echo "REPO_DUMMY_SECRET=EMPTY"
+            echo "EXFIL_LOG REPO_DUMMY_SECRET=EMPTY" | tee -a exfil/hashes.txt
           fi
           if [ -n "$ENV_SECRET" ]; then
-            echo "ENV_DUMMY_SECRET=PRESENT sha256=$(printf '%s' "$ENV_SECRET" | sha256sum | awk '{print $1}')"
+            echo "EXFIL_LOG ENV_DUMMY_SECRET=PRESENT sha256=$(printf '%s' "$ENV_SECRET" | sha256sum | awk '{print $1}')" | tee -a exfil/hashes.txt
           else
-            echo "ENV_DUMMY_SECRET=EMPTY"
+            echo "EXFIL_LOG ENV_DUMMY_SECRET=EMPTY" | tee -a exfil/hashes.txt
           fi
+      - name: Upload hash artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: exfil-release-env-hashes
+          path: exfil/hashes.txt
